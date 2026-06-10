@@ -645,4 +645,75 @@ pub struct NodeView {
     pub conditions: Vec<NodeConditionView>,
     #[serde(rename = "localTemplates", skip_serializing_if = "Vec::is_empty")]
     pub local_templates: Vec<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub versions: Vec<ComponentVersionView>,
+}
+
+/// One component's version on a node.
+#[derive(Debug, Serialize, ToSchema, Clone, Default)]
+pub struct ComponentVersionView {
+    pub component: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub version: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub commit: String,
+    #[serde(rename = "buildTime", skip_serializing_if = "String::is_empty")]
+    pub build_time: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub source: String,
+}
+
+/// Control-plane reference version (the cluster's target version).
+#[derive(Debug, Serialize, ToSchema, Clone, Default)]
+pub struct ControlPlaneVersionView {
+    pub version: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub commit: String,
+    #[serde(rename = "buildTime", skip_serializing_if = "String::is_empty")]
+    pub build_time: String,
+}
+
+/// A group of nodes that report the same version of a component.
+#[derive(Debug, Serialize, ToSchema, Clone, Default)]
+pub struct ComponentVersionGroupView {
+    pub version: String,
+    pub nodes: Vec<String>,
+}
+
+/// Per-component aggregation across all nodes.
+#[derive(Debug, Serialize, ToSchema, Clone, Default)]
+pub struct ComponentMatrixRowView {
+    pub component: String,
+    #[serde(rename = "declaredVersion", skip_serializing_if = "String::is_empty")]
+    pub declared_version: String,
+    #[serde(rename = "declaredVersions", skip_serializing_if = "Vec::is_empty")]
+    pub declared_versions: Vec<String>,
+    pub consistent: bool,
+    pub versions: Vec<ComponentVersionGroupView>,
+}
+
+/// A single component version on a single node, with release declaration membership.
+#[derive(Debug, Serialize, ToSchema, Clone, Default)]
+pub struct NodeComponentEntryView {
+    pub component: String,
+    pub version: String,
+    pub declared: bool,
+}
+
+/// Per-node view of the version matrix.
+#[derive(Debug, Serialize, ToSchema, Clone, Default)]
+pub struct NodeVersionRowView {
+    #[serde(rename = "nodeID")]
+    pub node_id: String,
+    pub healthy: bool,
+    pub components: Vec<NodeComponentEntryView>,
+}
+
+/// Full node x component version matrix.
+#[derive(Debug, Serialize, ToSchema, Clone, Default)]
+pub struct VersionMatrixView {
+    #[serde(rename = "controlPlane")]
+    pub control_plane: ControlPlaneVersionView,
+    pub components: Vec<ComponentMatrixRowView>,
+    pub nodes: Vec<NodeVersionRowView>,
 }
