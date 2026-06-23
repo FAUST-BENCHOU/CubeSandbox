@@ -37,7 +37,7 @@ use std::sync::{Arc, Barrier};
 use std::{collections::HashMap, convert::TryInto};
 use thiserror::Error;
 use virtio_bindings::bindings::virtio_blk::*;
-use virtio_bindings::bindings::virtio_ring::VIRTIO_RING_F_EVENT_IDX;
+use virtio_bindings::bindings::virtio_ring::{VIRTIO_RING_F_EVENT_IDX, VIRTIO_RING_F_INDIRECT_DESC};
 use virtio_queue::{Queue, QueueOwnedT, QueueT};
 use vm_memory::{ByteValued, Bytes, GuestAddressSpace, GuestMemoryAtomic, GuestMemoryError};
 use vm_migration::{Migratable, MigratableError, Pausable, Snapshot, Snapshottable, Transportable};
@@ -46,6 +46,8 @@ use vmm_sys_util::eventfd::EventFd;
 
 const SECTOR_SHIFT: u8 = 9;
 pub const SECTOR_SIZE: u64 = 0x01 << SECTOR_SHIFT;
+
+pub const MINIMUM_BLOCK_QUEUE_SIZE: u16 = 2;
 
 // New descriptors are pending on the virtio queue.
 const QUEUE_AVAIL_EVENT: u16 = EPOLL_HELPER_EVENT_LAST + 1;
@@ -508,7 +510,9 @@ impl Block {
                 | (1u64 << VIRTIO_BLK_F_CONFIG_WCE)
                 | (1u64 << VIRTIO_BLK_F_BLK_SIZE)
                 | (1u64 << VIRTIO_BLK_F_TOPOLOGY)
-                | (1u64 << VIRTIO_RING_F_EVENT_IDX);
+                | (1u64 << VIRTIO_BLK_F_SEG_MAX)
+                | (1u64 << VIRTIO_RING_F_EVENT_IDX)
+                | (1u64 << VIRTIO_RING_F_INDIRECT_DESC);
 
             if iommu {
                 avail_features |= 1u64 << VIRTIO_F_IOMMU_PLATFORM;
@@ -543,6 +547,7 @@ impl Block {
                 physical_block_exp,
                 min_io_size: (topology.minimum_io_size / logical_block_size) as u16,
                 opt_io_size: (topology.optimal_io_size / logical_block_size) as u32,
+                seg_max: (queue_size - MINIMUM_BLOCK_QUEUE_SIZE) as u32,
                 ..Default::default()
             };
 
