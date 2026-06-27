@@ -29,6 +29,7 @@ export interface TemplateSummary {
   lastError?: string | null;
   createdAt?: string | null;
   imageInfo?: string | null;
+  jobID?: string | null;
   networkType?: string | null;
   allowInternetAccess?: boolean | null;
 }
@@ -126,6 +127,7 @@ function mapTemplateSummary(dto: TemplateSummaryDto): TemplateSummary {
     lastError: dto.lastError,
     createdAt: dto.createdAt,
     imageInfo: dto.imageInfo,
+    jobID: dto.jobID ?? null,
     networkType: (dto as unknown as { networkType?: string }).networkType ?? null,
     allowInternetAccess: (dto as unknown as { allowInternetAccess?: boolean }).allowInternetAccess ?? null,
   };
@@ -142,6 +144,7 @@ function mapTemplateDetail(dto: TemplateDetailDto): TemplateDetail {
     imageInfo: undefined,
     replicas: dto.replicas,
     createRequest: dto.createRequest,
+    jobID: (dto as unknown as { jobID?: string }).jobID ?? null,
     networkType: (dto as unknown as { networkType?: string }).networkType ?? null,
     allowInternetAccess: (dto as unknown as { allowInternetAccess?: boolean }).allowInternetAccess ?? null,
   };
